@@ -1,14 +1,14 @@
 # lidar_cam_semiauto_calibrator
-Semi-automatic LiDAR-camera calibration toolkit for multi-camera and multi-LiDAR systems. Supports point cloud clustering, contour extraction, interactive feature annotation, 3D-2D line optimization and real-time calibration visualization.
+Semi-automatic LiDAR-camera calibration toolkit for multi-camera and multi-LiDAR systems. Supports point cloud clustering, contour extraction, interactive feature annotation, 3D-2D line optimization and real-time calibration visualization.用于多摄像头和多激光雷达系统的半自动激光雷达相机校准工具包。支持点云聚类，轮廓提取，交互式特征标注，3D-2D线优化和实时校准可视化。
 # Calibration Operation Guide
 
-This guide describes the offline LiDAR-camera extrinsic calibration workflow. It starts directly from calibration setup and does not include Fast DDS data acquisition or playback procedures.
+This guide describes the offline LiDAR-camera extrinsic calibration workflow. 本指南描述了脱机激光雷达相机外部校准工作流程。
 
 ## 1. Calibration Scene and Target Placement
 
-For reliable calibration, place large and clearly visible objects within the overlapping field of view of the LiDAR and camera.
+For reliable calibration, place clearly visible objects within the overlapping field of view of the LiDAR and camera.为了进行可靠的校准，请将清晰可见的物体放置在激光雷达和相机的重叠视场内。
 
-Recommended practices:
+Recommended practices:   建议做法:
 
 - Prefer large targets with clear geometric edges.
 - If no fixed structures are available, place three movable targets in each viewing direction and arrange them in a roughly triangular layout.
@@ -18,11 +18,11 @@ Recommended practices:
 - Existing vehicles, retaining walls, and mounted calibration boards may also be used when they provide clear and repeatable edges.
 - Select targets at different image locations and, when possible, at different depths.
 
-The objective is to identify corresponding LiDAR and image features that represent the same physical edges or corners.
+The objective is to identify corresponding LiDAR and image features that represent the same physical edges or corners.目标是识别代表相同物理边缘或角落的相应激光雷达和图像特征。
 
 ## 2. Start the Calibration Application
 
-Run the calibration application with the required sensor pair:
+Run the calibration application with the required sensor pair:使用所需的传感器对运行校准应用程序：
 
 ```bash
 ./build/lidar_cam_semiauto_calibrator \
@@ -30,7 +30,7 @@ Run the calibration application with the required sensor pair:
   --pair Front
 ```
 
-Supported sensor pairs:
+Supported sensor pairs:   支持的传感器对：
 
 | Pair | Description |
 | --- | --- |
@@ -40,17 +40,17 @@ Supported sensor pairs:
 | `Right` | Right camera and right BP LiDAR |
 | `Back` | Rear camera and rear BP LiDAR |
 
-After startup, the application displays the camera image, projected LiDAR points and boundaries, live parameters, the current extrinsic estimate, and calibration controls.
+After startup, the application displays the camera image, projected LiDAR points and boundaries, live parameters, the current extrinsic estimate, and calibration controls.启动后，应用程序显示相机图像、投影激光雷达点和边界、实时参数、当前外部估计和校准控制。
 
 ![Calibration main window](docs/images/calibration_main_window.png)
 
 ## 3. Inspect Point-Cloud Preprocessing
 
-Before selecting calibration features, inspect the ground removal and clustering results.
+Before selecting calibration features, inspect the ground removal and clustering results.在选择校准特征之前，检查地面去除和聚类结果。
 
-The parameters in the left panel can be adjusted at runtime:
+The parameters in the left panel can be adjusted at runtime:左面板中的参数可以在运行时调整：
 
-| Parameter | Description |
+| Parameter | Description |   | |参数说明|
 | --- | --- |
 | `Cluster Tol` | Euclidean clustering distance threshold |
 | `Min Points` | Minimum number of points required for a cluster |
@@ -60,15 +60,15 @@ The parameters in the left panel can be adjusted at runtime:
 | `Edge Grad` | Minimum image-gradient magnitude |
 | `Boundary Close` | Morphological closing size used for boundary construction |
 
-In most cases, only the LiDAR preprocessing parameters need adjustment. The goal is to preserve the target points, suppress the ground, and obtain clear LiDAR boundaries or selectable LiDAR points.
+In most cases, only the LiDAR preprocessing parameters need adjustment. The goal is to preserve the target points, suppress the ground, and obtain clear LiDAR boundaries or selectable LiDAR points.在大多数情况下，只需要调整LiDAR预处理参数。目标是保留目标点，抑制地面，并获得清晰的LiDAR边界或可选择的LiDAR点。
 
-For sparse BP LiDARs, use a larger clustering tolerance and a smaller minimum cluster size than for the main AT128 LiDAR.
+For sparse BP LiDARs, use a larger clustering tolerance and a smaller minimum cluster size than for the main AT128 LiDAR.对于稀疏BP激光雷达，使用比主AT128激光雷达更大的聚类容差和更小的最小聚类大小。
 
 ## 4. Coarsely Adjust the Extrinsic Parameters
 
-Check whether the projected LiDAR points appear near the corresponding objects in the image.
+Check whether the projected LiDAR points appear near the corresponding objects in the image.检查投影的LiDAR点是否出现在图像中相应物体附近。
 
-If the initial projection is significantly displaced, use the keyboard controls:
+If the initial projection is significantly displaced, use the keyboard controls:如果初始投影明显偏移，请使用键盘控制：
 
 | Key | Action |
 | --- | --- |
