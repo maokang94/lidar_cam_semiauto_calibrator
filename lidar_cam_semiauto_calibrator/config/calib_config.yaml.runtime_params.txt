@@ -1,0 +1,15 @@
+# Runtime parameter snapshot. Trackbar changes update this file.
+cluster_tolerance_m=0.65
+cluster_min_points=8
+ground_distance_threshold=0.12
+canny_low=100
+canny_high=300
+edge_gradient_min=90
+boundary_close_px=8
+manual_feature_validation_mean_px=8
+manual_feature_validation_max_px=18
+manual_feature_validation_max_rounds=3
+manual_feature_near_priority_range_m=25
+manual_feature_near_priority_weight=2
+manual_image_corner_snap_enabled=1
+manual_image_corner_snap_radius_px=12

@@ -1,0 +1,20 @@
+[epu.sensor_calibration_config.SURROUD_RIGHT_CAMERA.extrinsic_params]
+value_des = "右相机外参标定(激光雷达到相机/图像坐标系)参数(yaw,roll,pitch,x,y,z)"
+value = [-0.330, 52.902, 116.255, -0.123, 0.221, -0.106]
+
+[epu.sensor_calibration_config.SURROUD_FRONT_CAMERA.extrinsic_params]
+value_des = "长焦相机外参标定(主激光雷达到相机/图像坐标系)参数(yaw,roll,pitch,x,y,z)"
+value = [-25.937, -23.729, 87.591, 0.131, -0.243, 0.146]
+
+[epu.sensor_calibration_config.SURROUD_LEFT_CAMERA.extrinsic_params]
+value_des = "左相机外参标定(激光雷达到相机/图像坐标系)参数(yaw,roll,pitch,x,y,z)"
+value = [5.246, -38.185, 106.592, 0.181, 0.184, -0.111]
+
+[epu.sensor_calibration_config.SURROUD_BACK_CAMERA.extrinsic_params]
+value_des = "后相机外参标定(激光雷达到相机/图像坐标系)参数(yaw,roll,pitch,x,y,z)"
+value = [1.818, -6.921, 113.893, -0.317, 0.083, 0.128]
+
+[epu.sensor_calibration_config.SURROUD_FISH_CAMERA.extrinsic_params]
+value_des = "鱼眼相机外参标定(主激光雷达到相机/图像坐标系)参数(yaw,roll,pitch,x,y,z)"
+value = [4.111, 5.030, 90.043, -0.153, -0.068, -0.331]
+

@@ -1,0 +1,397 @@
+%YAML:1.0
+---
+# LiDAR cluster / boundary / line-pair calibration config
+# 投影模型: P_camera = R_lidar_to_camera * P_lidar + T_ext
+# extrinsic_initial 顺序固定为 [yaw, roll, pitch, x, y, z]
+#
+# 配置分层：
+#   cluster_debug_defaults: 自然环境下各相机共用的检测/聚类/优化参数
+#   sensor_pairs.<pair>:    每个相机自己的内参、外参、数据路径、静止帧和 ROI
+#   sensor_pairs.<pair>.cluster_debug: 只写和 defaults 不同的覆盖项，以及该相机自己的 ROI
+
+calib_data:  # 标定数据入口；发布版不含 FastDDS 采集程序
+  root_dir: "../sample_data"  # 按按钮保存的图像/点云根目录
+  latest_static_id: 6 # 采集程序每次保存后自动更新；标定端在 pair.static_id<=0 时读取这里
+  latest_static_pick_idx: 0 # 当前按钮保存只写 mid_00
+  preview_point_step: 3  # 采集界面投影抽样步长
+  preview_point_radius: 1  # 采集界面投影点半径
+  preview_panel_width: 640  # 采集界面单个相机预览宽度
+  preview_panel_height: 360  # 采集界面单个相机预览高度
+  preview_window_width: 1700  # 采集界面初始窗口宽度
+  preview_window_height: 1000  # 采集界面初始窗口高度
+
+cluster_debug_defaults:  # 各相机共用的默认聚类、边界、匹配和优化参数
+  enable: 1  # 全局调试/标定流程总开关：1=启用
+  remove_ground_by_default: 1  # 1=标定前默认使用 RANSAC 去地面点云，0=保留原始点云
+  ground_distance_threshold: 0.1  # RANSAC 地面平面距离阈值，单位 m；越大去除范围越宽
+
+  min_camera_depth: 0.8  # 投影点在相机坐标系 Z 方向的最小有效深度，单位 m
+  max_camera_depth: 120.0  # 投影点在相机坐标系 Z 方向的最大有效深度，单位 m
+  min_lidar_range: 1.0  # LiDAR 点到雷达原点的三维欧氏距离下限，单位 m
+  max_lidar_range: 20.0  # LiDAR 点到雷达原点的三维欧氏距离上限，单位 m
+
+  cluster_tolerance_m: 1.2  # 欧式聚类邻域距离阈值，单位 m；越大越容易把相邻物体合并
+  cluster_min_points: 100  # 保留一个聚类所需的最少点数
+  cluster_max_points: 1000000  # 保留一个聚类允许的最大点数
+  max_display_clusters: 80  # 最多保留并显示的聚类数量
+
+  draw_cluster_step: 1  # 点云投影绘制抽样步长；1=逐点绘制，数值越大显示点越稀
+  point_radius: 1  # 普通 LiDAR 投影点的显示半径，单位 px
+  cluster_point_color_scale: 0.35  # 普通点云颜色亮度系数；越小越弱化点云显示
+  draw_cluster_labels: 0  # 1=显示聚类编号和点数，0=隐藏
+  main_window_highlight_matches: 0  # 1=主窗口加粗已匹配红蓝边界，0=主窗口只显示细候选边界
+  matched_boundary_line_thickness: 4  # 匹配成功及优化阶段红蓝边界的显示线宽，单位 px
+  roi_preview_thick_candidates: 0  # 1=框选 ROI 时加粗 ROI 内所有候选边界，0=仅加粗匹配段
+  roi_preview_boundary_line_thickness: 3  # ROI 预览阶段红蓝边界的加粗线宽，单位 px
+  show_final_full_projection: 1  # 1=确认保存后显示去地面点云的整体投影效果图
+  final_projection_point_step: 1  # 最终整体投影的点云抽样步长
+  final_projection_point_radius: 1  # 最终整体投影点的显示半径，单位 px
+  final_projection_point_color_scale: 0.45  # 最终整体投影点的颜色亮度系数
+
+  draw_cluster_boundaries: 1  # 1=提取并显示 LiDAR 聚类投影边界
+  lidar_boundary_mode: 2  # LiDAR 边界模式：0=稀疏 mask，1=凸包，2=贴合点云足迹的外轮廓
+  boundary_mask_dilate_px: 3  # 旧 mask 边界模式的膨胀半径，单位 px
+  boundary_fill_radius_px: 2  # 构造点云足迹 mask 时每个投影点的填充半径，单位 px；越小越贴合
+  boundary_close_px: 8  # 点云足迹 mask 的闭运算尺度，单位 px；越大越容易连接断点但可能跨空区
+  lidar_boundary_sample_step_px: 3  # LiDAR 边界重采样间隔，单位 px
+  boundary_keep_largest_only: 0  # 0=同一 cluster 投影出的多个断开轮廓都保留；1=只保留最大轮廓
+  boundary_hull_approx_epsilon_px: 0.5  # 边界折线简化精度，单位 px；越大越平滑、细节越少
+  boundary_line_thickness: 2  # 未匹配 LiDAR 候选边界的基础线宽，单位 px
+  boundary_min_area_px: 20.0  # 保留投影轮廓的最小面积阈值，单位 px²
+  boundary_min_arc_px: 20.0  # 保留投影轮廓的最小周长阈值，单位 px
+  boundary_min_projected_points: 10  # 一个聚类至少投影多少个点后才提取边界
+
+  draw_nearby_image_edges: 1  # 1=启用图像边缘/轮廓提取与红蓝边界匹配
+  draw_all_canny_edges: 0  # 1=显示全部 Canny 边缘，通常仅用于调试
+  canny_low: 100  # Canny 低阈值；提高可减少弱纹理边缘
+  canny_high: 300  # Canny 高阈值；通常设置为低阈值的约 2~3 倍
+  edge_gradient_min: 90.0  # Scharr 梯度强度下限；提高可过滤地面、挡墙等弱纹理
+  edge_search_radius_px: 18.0  # 旧模式下在 LiDAR 边界周围搜索图像边缘的半径，单位 px
+  edge_sample_step: 3  # 沿 LiDAR 边界搜索/匹配图像边缘的采样步长
+  image_edge_point_radius: 2  # 图像边缘匹配点的显示半径，单位 px
+  draw_edge_match_lines: 0  # 1=显示 LiDAR 采样点到图像边缘点的连接线
+
+  use_roi_image_contours: 1  # 1=在图像 ROI 内独立提取完整图像轮廓，0=使用旧的邻域搜索模式
+  draw_roi_image_contours: 1  # 1=显示 ROI 内提取出的图像候选轮廓
+  restrict_image_contours_to_rois: 1  # 1=只在图像 ROI 内提取图像轮廓
+  image_contour_min_points: 18  # 保留一条图像轮廓所需的最少轮廓点数
+  image_contour_min_length_px: 30.0  # 保留一条图像轮廓所需的最小长度，单位 px
+  image_contour_min_area_px: 0.0  # 图像轮廓最小面积，单位 px²；线状轮廓通常设为 0
+  image_contour_approx_epsilon_px: 1.5  # 图像轮廓折线简化精度，单位 px；越大越平滑
+  image_contour_match_radius_px: 80.0  # LiDAR 红边界与图像蓝轮廓允许匹配的最大搜索距离，单位 px
+  draw_nearby_image_edge_lines: 1  # 1=将匹配到的图像边缘点连接成蓝色折线
+  draw_nearby_image_edge_points: 0  # 1=额外显示图像边缘匹配点
+  image_edge_line_thickness: 2  # 图像蓝色边缘折线的基础线宽，单位 px
+  image_edge_line_min_points: 4  # 形成一条图像边缘折线所需的最少点数
+  image_edge_line_max_gap_px: 18.0  # 同一图像边缘折线内相邻点允许的最大间距，单位 px
+  image_edge_line_min_length_px: 25.0  # 图像边缘折线的最小长度，单位 px
+
+  draw_line_pair_matches: 1  # 1=执行并显示红色 LiDAR 边界与蓝色图像轮廓的线对匹配
+  draw_unmatched_lidar_contours: 1  # 1=显示未匹配的细红色 LiDAR 候选边界
+  line_pair_min_points: 5  # 普通模式下接受一对红蓝线所需的最少对应点数
+  line_pair_min_red_length_px: 25.0  # 普通模式下红色 LiDAR 匹配段的最小长度，单位 px
+  line_pair_min_blue_length_px: 20.0  # 普通模式下蓝色图像匹配段的最小长度，单位 px
+  line_pair_max_mean_dist_px: 80.0  # 普通模式下红蓝线对应点平均距离上限，单位 px
+  line_pair_max_angle_diff_deg: 180.0  # 普通模式下红蓝线主方向夹角上限，单位 deg
+  line_pair_max_gap_px: 22.0  # 同一红蓝匹配段内相邻匹配点允许的最大间隔，单位 px
+  line_pair_max_pairs: 80  # 最多保留并显示的红蓝候选线对数量
+  draw_line_pair_center_links: 1  # 1=显示红蓝线对中心之间的连接线
+  draw_line_pair_labels: 1  # 1=显示线对编号、平均距离和角度差
+  trust_roi_line_pairs: 1  # 1=人工 ROI 内采用高信任匹配规则，放宽普通筛选条件
+  trusted_line_pair_max_mean_dist_px: 80.0  # 高信任 ROI 模式允许的红蓝线平均距离上限，单位 px
+  trusted_line_pair_max_angle_diff_deg: 180.0  # 高信任 ROI 模式允许的红蓝线方向夹角上限，单位 deg
+  trusted_line_pair_weight: 1.0  # 高信任 ROI 线对进入优化时的残差权重
+  trusted_min_residual_count: 1  # 高信任模式允许启动优化所需的最少有效残差数
+
+  enable_line_pair_optimization: 1  # 1=按 Enter 后使用红蓝匹配线对进行 Ceres 外参优化
+  min_line_pairs_for_optimization: 1  # 启动优化所需的最少线对数；当前设为 1 表示单线对也尝试解算
+  max_line_pairs_for_optimization: 60  # 最多使用多少对高质量红蓝线进入优化
+  line_pair_residual_sample_step: 1  # 在线对上构建优化残差的采样步长；1=使用每个匹配点
+  line_pair_lidar_assoc_radius_px: 18.0  # 红色边界点关联最近 3D LiDAR 投影点的最大半径，单位 px
+  max_delta_yaw_deg: 6.0  # 相对手动初值允许优化的 yaw 最大变化量，单位 deg
+  max_delta_roll_deg: 6.0  # 相对手动初值允许优化的 roll 最大变化量，单位 deg
+  max_delta_pitch_deg: 6.0  # 相对手动初值允许优化的 pitch 最大变化量，单位 deg
+  max_delta_translation_m: 0.35  # 相对手动初值允许每个平移分量变化的最大绝对值，单位 m
+  prior_sigma_angle_deg: 5.0  # 角度增量先验标准差，单位 deg；越大先验越弱、优化越大胆
+  prior_sigma_translation_m: 0.25  # 平移增量先验标准差，单位 m；越大先验越弱、优化越大胆
+  optimization_max_iterations: 120  # Ceres 最大迭代次数
+  optimization_huber_loss_px: 12.0  # Huber 鲁棒损失尺度，单位 px；越大对大残差越宽容
+
+  mouse_roi_tool:  # 鼠标多 ROI 交互调试工具配置
+    enable: 1  # 1=启用实时 UV 显示、鼠标拖拽多 ROI 和 Shift+S 保存
+    replace_existing: 1  # Shift+S 保存 ROI 时：1=替换已有 rects，0=追加到已有 rects
+
+  manual_feature_pairing:  # 人工多组 3D LiDAR 特征与 2D 图像特征配对及外参优化配置
+    # F/G 模式固定忽略 camera ROI 和 lidar XYZ ROI；ROI 只保留给旧自动匹配与调试显示流程。
+    # 人工优化只使用鼠标确认并按 A 接受的特征组，选中的特征不会再被任何 ROI 二次过滤。
+    enable: 1  # 1=允许按 F/G 进入人工特征配对模式，0=关闭该功能
+    snap_radius_px: 18.0  # 鼠标点击时吸附到最近红色/蓝色边界的最大半径，单位 px
+    min_segment_points: 4  # LiDAR 红线至少包含的轮廓/三维关联点数；蓝线不再用顶点数判长短
+    min_segment_length_px: 12.0  # 红蓝人工线段的最小实际像素弧长；长直线即使简化后只有2个端点也可通过
+    image_corner_snap_enable: 1  # G模式点击图像点时，在鼠标附近自动吸附角点/强灰度变化点
+    image_corner_snap_radius_px: 12  # 图像点自动吸附搜索半径，单位 px；找不到特征则沿用原始点击
+    residual_sample_step: 1  # 人工 LiDAR 线段构建残差的采样步长；1=使用每个边界点
+    normal_weight: 1.0  # LiDAR 投影点到对应图像线法向距离残差的权重
+    endpoint_weight: 0.45  # 红蓝线段两端点二维重投影残差权重，用于抑制沿线方向滑动
+    center_weight: 0.20  # 红蓝线段中心二维重投影残差权重
+    huber_loss_px: 5.0  # 人工线段残差使用的 Huber 鲁棒核尺度，单位 px
+    max_iterations: 100  # 人工特征配对模式下 Ceres 最大迭代次数
+    max_delta_angle_deg: 6.0  # yaw、roll、pitch 相对当前初值允许的最大调整量，单位 deg
+    max_delta_translation_m: 0.35  # x、y、z 相对当前初值允许的最大调整量，单位 m
+    prior_sigma_angle_deg: 4.0  # 旋转增量先验标准差，单位 deg；越大先验越弱、优化越大胆
+    prior_sigma_translation_m: 0.20  # 平移增量先验标准差，单位 m；越大先验越弱、优化越大胆
+    validation_mean_px: 8.0  # 优化后所有人工线组平均残差验收阈值，单位 px；超过会自动继续优化
+    validation_max_px: 18.0  # 优化后任一点/端点最大残差验收阈值，单位 px；超过会自动继续优化
+    validation_max_rounds: 3  # 单次点击 Optimize 后最多自动重试几轮 Ceres
+    validation_min_improvement_px: 0.25  # 连续重试改善小于该值时停止，避免无效死循环
+    near_priority_range_m: 25.0  # 如果多轮仍无法全部达标，优先保留该距离内近处线组残差更小的结果
+    near_priority_weight: 2.0  # 近处线组优化权重倍率；设 1.0 可关闭近处优先
+
+    # F 模式：在全图红/蓝候选边界上点击起点和终点；只取两次点击间局部线段。
+    # 图像候选使用全图边界，LiDAR 候选聚类也关闭 lidar.xyz_min/xyz_max ROI。
+    image_densify_step_px: 1.0  # 选择前将蓝色候选折线按该像素步长加密，避免长直线被简化成2个端点后误选整条线
+
+    # G 模式：完全不依赖图像 Canny、颜色分割、相机 ROI、LiDAR XYZ ROI 或蓝色候选线。
+    # LiDAR 侧点击2个红色边界点，保留其真实3D坐标并组成3D直线；图像侧点击2个任意像素组成2D目标线。
+    enable_free_line_mode: 1  # 1=允许按 G 进入自由 3D LiDAR 线 -> 2D 图像线配对模式
+    free_line_sample_count: 16  # 在人工3D直线两个端点之间均匀采样多少个3D点，投影后约束到2D图像线
+    free_line_distance_weight: 1.0  # 投影3D线点到人工2D图像直线的法向距离权重，核心约束
+    free_line_direction_weight: 0.30  # 投影后线方向与人工图像线方向的平行约束权重
+    free_line_endpoint_weight: 0.15  # 两个3D端点投影到对应图像端点的二维软约束；点得不准时不要设太大
+    free_line_length_weight: 0.08  # 投影线段长度与人工图像线段长度的软约束；仅辅助，避免主导优化
+
+sensor_pairs:  # 各相机独立配置；同名参数会覆盖上面的默认值
+  Front:
+    camera:  # 相机内参或图像 ROI 配置分组
+      intrinsic_matrix: [1296.147353, 0.0, 638.3439982,
+                         0.0, 1295.973595, 361.7281459,
+                         0.0, 0.0, 1.0]  # 3×3 相机内参矩阵 K，按行展开为 [fx,0,cx, 0,fy,cy, 0,0,1]
+      distortion_coeffs: [0, 0, 0, 0, 0, 0, 0, 0]  # 相机畸变参数；输入图像已去畸变时通常全部设为 0
+    extrinsic_initial:  # LiDAR 到相机的外参初值，旋转顺序为 yaw、roll、pitch
+      yaw_deg: -25.937347  # 外参 yaw，绕相机 Y 轴旋转，单位 deg
+      roll_deg: -23.729049  # 外参 roll，绕相机 Z 轴旋转，单位 deg
+      pitch_deg: 87.590966  # 外参 pitch，绕相机 X 轴旋转，单位 deg
+      x: 0.130672  # LiDAR 原点在相机坐标系中的 X 平移，单位 m
+      y: -0.243424  # LiDAR 原点在相机坐标系中的 Y 平移，单位 m
+      z: 0.146103  # LiDAR 原点在相机坐标系中的 Z 平移，单位 m
+    data:  # 该相机对应的图像、点云、结果文件及静止帧选择
+      image_dir: "../sample_data/camera_front/data_undistorted"  # 已去畸变图像所在目录
+      pcd_dir: "../sample_data/lidar_main/data"  # 对应 LiDAR PCD 点云所在目录
+      result_file: "../result/extrinsic_result.toml"  # 最终外参同步保存的 TOML 结果文件路径
+      static_id: 0  # 0=使用 calib_data.latest_static_id；正数=手动指定 static_XXX
+      static_pick_idx: 0  # 选择该静止段中的第几个 mid 帧；文件名中的 mid_XX
+    cluster_debug:  # 该相机相对 cluster_debug_defaults 的覆盖参数及 ROI
+      # 雷达类型：AT128 主雷达（高密度）；以下参数独立覆盖全局 defaults。
+      ground_distance_threshold: 0.12  # RANSAC 点到地面平面的距离阈值，单位 m；BP 较小以避免误删稀疏目标
+      max_camera_depth: 100.0  # 投影点在相机坐标系 Z 方向的最大有效深度，单位 m
+      max_lidar_range: 100.0  # 点到雷达原点的三维距离上限，单位 m
+      cluster_tolerance_m: 0.65  # 欧式聚类邻域阈值，单位 m；AT128 较小，稀疏 BP 较大
+      cluster_min_points: 8  # 最小聚类点数；BP 设为 3，尽量让稀疏点进入聚类
+      image_contour_min_points: 58  # 保留一条图像轮廓所需的最少轮廓点数
+      image_contour_min_length_px: 80.0  # 保留一条图像轮廓所需的最小长度，单位 px
+      image_contour_approx_epsilon_px: 2.5  # 图像轮廓折线简化精度，单位 px；越大越平滑
+      remove_ground_by_default: 1  # 1=默认先做 RANSAC 去地面；各雷达独立设置
+      min_lidar_range: 1.0  # 点到雷达原点的三维距离下限，单位 m
+      cluster_max_points: 1000000  # 最大聚类点数
+      max_display_clusters: 300  # 最多显示的聚类数量；提高后减少因数量上限丢失的小类
+      boundary_min_projected_points: 5  # 提取投影边界所需的最少投影点数
+      boundary_min_area_px: 6.0  # 保留 LiDAR 投影边界的最小面积，单位 px²
+      boundary_min_arc_px: 10.0  # 保留 LiDAR 投影边界的最小周长，单位 px
+      # 注意：F/G 人工选点模式仍会忽略 camera ROI 与 lidar XYZ ROI；
+      # 上述去地面、range、聚类参数仍然生效，用于生成可点击的 LiDAR 聚类和边界。
+      roi:  # 人工选择的图像 ROI 和 LiDAR 三维裁剪区域
+        camera:  # 相机内参或图像 ROI 配置分组
+          enable: 1  # 总开关：1=启用当前功能，0=关闭
+          restrict_projection: 1  # 1=仅使用图像 ROI 内的 LiDAR 投影；当前主流程可将 ROI 仅用于匹配筛选
+          restrict_image_edges: 1  # 1=只允许图像 ROI 内的边缘/轮廓参与匹配
+          rects:  # 图像 ROI 列表，每项格式为 [x, y, width, height]，单位 px
+            - [291, 548, 120, 89]  # [x, y, w, h] 鼠标批量框选保存的图像 ROI
+        lidar:  # LiDAR 原始坐标系下的三维 ROI 配置
+          enable: 1  # 总开关：1=启用当前功能，0=关闭
+          xyz_min: [-40.0, -00.0, -3.5]  # LiDAR 三维轴向裁剪下限 [x_min, y_min, z_min]，单位 m
+          xyz_max: [40.0, 80.0, 6.0]  # LiDAR 三维轴向裁剪上限 [x_max, y_max, z_max]，单位 m
+
+  Fish:
+    camera:  # 相机内参或图像 ROI 配置分组
+      intrinsic_matrix: [340.7727586, 0.0, 640.7681342,
+                         0.0, 340.4697386, 361.776844,
+                         0.0, 0.0, 1.0]  # 3×3 相机内参矩阵 K，按行展开为 [fx,0,cx, 0,fy,cy, 0,0,1]
+      distortion_coeffs: [0, 0, 0, 0, 0, 0, 0, 0]  # 相机畸变参数；输入图像已去畸变时通常全部设为 0
+    extrinsic_initial:  # LiDAR 到相机的外参初值，旋转顺序为 yaw、roll、pitch
+      yaw_deg: 4.111372  # 外参 yaw，绕相机 Y 轴旋转，单位 deg
+      roll_deg: 5.029982  # 外参 roll，绕相机 Z 轴旋转，单位 deg
+      pitch_deg: 90.043079  # 外参 pitch，绕相机 X 轴旋转，单位 deg
+      x: -0.152698  # LiDAR 原点在相机坐标系中的 X 平移，单位 m
+      y: -0.068432  # LiDAR 原点在相机坐标系中的 Y 平移，单位 m
+      z: -0.330558  # LiDAR 原点在相机坐标系中的 Z 平移，单位 m
+    data:  # 该相机对应的图像、点云、结果文件及静止帧选择
+      image_dir: "../sample_data/camera_fish/data_undistorted"  # 已去畸变图像所在目录
+      pcd_dir: "../sample_data/lidar_main/data"  # 对应 LiDAR PCD 点云所在目录
+      result_file: "../result/extrinsic_result.toml"  # 最终外参同步保存的 TOML 结果文件路径
+      static_id: 0  # 0=使用 calib_data.latest_static_id；正数=手动指定 static_XXX
+      static_pick_idx: 0  # 选择该静止段中的第几个 mid 帧；文件名中的 mid_XX
+    cluster_debug:  # 该相机相对 cluster_debug_defaults 的覆盖参数及 ROI
+      # 雷达类型：AT128 主雷达（高密度）；以下参数独立覆盖全局 defaults。
+      remove_ground_by_default: 1  # 1=默认先做 RANSAC 去地面；各雷达独立设置
+      ground_distance_threshold: 0.12  # RANSAC 点到地面平面的距离阈值，单位 m；BP 较小以避免误删稀疏目标
+      min_lidar_range: 1.0  # 点到雷达原点的三维距离下限，单位 m
+      max_lidar_range: 100.0  # 点到雷达原点的三维距离上限，单位 m
+      cluster_tolerance_m: 0.65  # 欧式聚类邻域阈值，单位 m；AT128 较小，稀疏 BP 较大
+      cluster_min_points: 5  # 最小聚类点数；BP 设为 3，尽量让稀疏点进入聚类
+      cluster_max_points: 1000000  # 最大聚类点数
+      max_display_clusters: 300  # 最多显示的聚类数量；提高后减少因数量上限丢失的小类
+      boundary_min_projected_points: 5  # 提取投影边界所需的最少投影点数
+      boundary_min_area_px: 6.0  # 保留 LiDAR 投影边界的最小面积，单位 px²
+      boundary_min_arc_px: 10.0  # 保留 LiDAR 投影边界的最小周长，单位 px
+      # 注意：F/G 人工选点模式仍会忽略 camera ROI 与 lidar XYZ ROI；
+      # 上述去地面、range、聚类参数仍然生效，用于生成可点击的 LiDAR 聚类和边界。
+      roi:  # 人工选择的图像 ROI 和 LiDAR 三维裁剪区域
+        camera:  # 相机内参或图像 ROI 配置分组
+          enable: 1  # 总开关：1=启用当前功能，0=关闭
+          restrict_projection: 1  # 1=仅使用图像 ROI 内的 LiDAR 投影；当前主流程可将 ROI 仅用于匹配筛选
+          restrict_image_edges: 1  # 1=只允许图像 ROI 内的边缘/轮廓参与匹配
+          rects:  # 图像 ROI 列表，每项格式为 [x, y, width, height]，单位 px
+            - [0, 0, 1280, 720]
+        lidar:  # LiDAR 原始坐标系下的三维 ROI 配置
+          enable: 1  # 总开关：1=启用当前功能，0=关闭
+          xyz_min: [-40.0, -10.0, -3.5]  # LiDAR 三维轴向裁剪下限 [x_min, y_min, z_min]，单位 m
+          xyz_max: [40.0, 100.0, 6.0]  # LiDAR 三维轴向裁剪上限 [x_max, y_max, z_max]，单位 m
+
+  Left:
+    camera:  # 相机内参或图像 ROI 配置分组
+      intrinsic_matrix: [674.2064136, 0.0, 641.6391187,
+                         0.0, 674.000708, 360.9844325,
+                         0.0, 0.0, 1.0]  # 3×3 相机内参矩阵 K，按行展开为 [fx,0,cx, 0,fy,cy, 0,0,1]
+      distortion_coeffs: [0, 0, 0, 0, 0, 0, 0, 0]  # 相机畸变参数；输入图像已去畸变时通常全部设为 0
+    extrinsic_initial:  # LiDAR 到相机的外参初值，旋转顺序为 yaw、roll、pitch
+      yaw_deg: 5.245626  # 外参 yaw，绕相机 Y 轴旋转，单位 deg
+      roll_deg: -38.184651  # 外参 roll，绕相机 Z 轴旋转，单位 deg
+      pitch_deg: 106.591713  # 外参 pitch，绕相机 X 轴旋转，单位 deg
+      x: 0.181327  # LiDAR 原点在相机坐标系中的 X 平移，单位 m
+      y: 0.184397  # LiDAR 原点在相机坐标系中的 Y 平移，单位 m
+      z: -0.110798  # LiDAR 原点在相机坐标系中的 Z 平移，单位 m
+    data:  # 该相机对应的图像、点云、结果文件及静止帧选择
+      image_dir: "../sample_data/camera_left/data_undistorted"  # 已去畸变图像所在目录
+      pcd_dir: "../sample_data/lidar_left_bp/data"  # 对应 LiDAR PCD 点云所在目录
+      result_file: "../result/extrinsic_result.toml"  # 最终外参同步保存的 TOML 结果文件路径
+      static_id: 0  # 0=使用 calib_data.latest_static_id；正数=手动指定 static_XXX
+      static_pick_idx: 0  # 选择该静止段中的第几个 mid 帧；文件名中的 mid_XX
+    cluster_debug:  # 该相机相对 cluster_debug_defaults 的覆盖参数及 ROI
+      # 雷达类型：BP 雷达（稀疏点云）；以下参数独立覆盖全局 defaults。
+      ground_distance_threshold: 0.08  # RANSAC 点到地面平面的距离阈值，单位 m；BP 较小以避免误删稀疏目标
+      min_lidar_range: 0.5  # 点到雷达原点的三维距离下限，单位 m
+      image_contour_min_points: 18  # 保留一条图像轮廓所需的最少轮廓点数
+      remove_ground_by_default: 1  # 1=默认先做 RANSAC 去地面；各雷达独立设置
+      max_lidar_range: 100.0  # 点到雷达原点的三维距离上限，单位 m
+      cluster_tolerance_m: 1.20  # 欧式聚类邻域阈值，单位 m；AT128 较小，稀疏 BP 较大
+      cluster_min_points: 3  # 最小聚类点数；BP 设为 3，尽量让稀疏点进入聚类
+      cluster_max_points: 1000000  # 最大聚类点数
+      max_display_clusters: 500  # 最多显示的聚类数量；提高后减少因数量上限丢失的小类
+      boundary_min_projected_points: 3  # 提取投影边界所需的最少投影点数
+      boundary_min_area_px: 2.0  # 保留 LiDAR 投影边界的最小面积，单位 px²
+      boundary_min_arc_px: 6.0  # 保留 LiDAR 投影边界的最小周长，单位 px
+      # 注意：F/G 人工选点模式仍会忽略 camera ROI 与 lidar XYZ ROI；
+      # 上述去地面、range、聚类参数仍然生效，用于生成可点击的 LiDAR 聚类和边界。
+      roi:  # 人工选择的图像 ROI 和 LiDAR 三维裁剪区域
+        camera:  # 相机内参或图像 ROI 配置分组
+          enable: 1  # 总开关：1=启用当前功能，0=关闭
+          restrict_projection: 1  # 1=仅使用图像 ROI 内的 LiDAR 投影；当前主流程可将 ROI 仅用于匹配筛选
+          restrict_image_edges: 1  # 1=只允许图像 ROI 内的边缘/轮廓参与匹配
+          rects:  # 图像 ROI 列表，每项格式为 [x, y, width, height]，单位 px
+            - [498, 359, 272, 109]  # [x, y, w, h] 鼠标批量框选保存的图像 ROI
+        lidar:  # LiDAR 原始坐标系下的三维 ROI 配置
+          enable: 1  # 总开关：1=启用当前功能，0=关闭
+          xyz_min: [-40.0, -10.0, -3.0]  # LiDAR 三维轴向裁剪下限 [x_min, y_min, z_min]，单位 m
+          xyz_max: [40.0, 100.0, 6.0]  # LiDAR 三维轴向裁剪上限 [x_max, y_max, z_max]，单位 m
+
+  Right:
+    camera:  # 相机内参或图像 ROI 配置分组
+      intrinsic_matrix: [679.1064862, 0.0, 639.1382151,
+                         0.0, 679.0114069, 359.8371933,
+                         0.0, 0.0, 1.0]  # 3×3 相机内参矩阵 K，按行展开为 [fx,0,cx, 0,fy,cy, 0,0,1]
+      distortion_coeffs: [0, 0, 0, 0, 0, 0, 0, 0]  # 相机畸变参数；输入图像已去畸变时通常全部设为 0
+    extrinsic_initial:  # LiDAR 到相机的外参初值，旋转顺序为 yaw、roll、pitch
+      yaw_deg: -0.330172  # 外参 yaw，绕相机 Y 轴旋转，单位 deg
+      roll_deg: 52.901786  # 外参 roll，绕相机 Z 轴旋转，单位 deg
+      pitch_deg: 116.254961  # 外参 pitch，绕相机 X 轴旋转，单位 deg
+      x: -0.123324  # LiDAR 原点在相机坐标系中的 X 平移，单位 m
+      y: 0.220623  # LiDAR 原点在相机坐标系中的 Y 平移，单位 m
+      z: -0.105992  # LiDAR 原点在相机坐标系中的 Z 平移，单位 m
+    data:  # 该相机对应的图像、点云、结果文件及静止帧选择
+      image_dir: "../sample_data/camera_right/data_undistorted"  # 已去畸变图像所在目录
+      pcd_dir: "../sample_data/lidar_right_bp/data"  # 对应 LiDAR PCD 点云所在目录
+      result_file: "../result/extrinsic_result.toml"  # 最终外参同步保存的 TOML 结果文件路径
+      static_id: 0  # 0=使用 calib_data.latest_static_id；正数=手动指定 static_XXX
+      static_pick_idx: 0  # 选择该静止段中的第几个 mid 帧；文件名中的 mid_XX
+    cluster_debug:  # 该相机相对 cluster_debug_defaults 的覆盖参数及 ROI
+      # 雷达类型：BP 雷达（稀疏点云）；以下参数独立覆盖全局 defaults。
+      remove_ground_by_default: 1  # 1=默认先做 RANSAC 去地面；各雷达独立设置
+      ground_distance_threshold: 0.08  # RANSAC 点到地面平面的距离阈值，单位 m；BP 较小以避免误删稀疏目标
+      min_lidar_range: 0.5  # 点到雷达原点的三维距离下限，单位 m
+      max_lidar_range: 100.0  # 点到雷达原点的三维距离上限，单位 m
+      cluster_tolerance_m: 1.20  # 欧式聚类邻域阈值，单位 m；AT128 较小，稀疏 BP 较大
+      cluster_min_points: 3  # 最小聚类点数；BP 设为 3，尽量让稀疏点进入聚类
+      cluster_max_points: 1000000  # 最大聚类点数
+      max_display_clusters: 500  # 最多显示的聚类数量；提高后减少因数量上限丢失的小类
+      boundary_min_projected_points: 3  # 提取投影边界所需的最少投影点数
+      boundary_min_area_px: 2.0  # 保留 LiDAR 投影边界的最小面积，单位 px²
+      boundary_min_arc_px: 6.0  # 保留 LiDAR 投影边界的最小周长，单位 px
+      # 注意：F/G 人工选点模式仍会忽略 camera ROI 与 lidar XYZ ROI；
+      # 上述去地面、range、聚类参数仍然生效，用于生成可点击的 LiDAR 聚类和边界。
+      roi:  # 人工选择的图像 ROI 和 LiDAR 三维裁剪区域
+        camera:  # 相机内参或图像 ROI 配置分组
+          enable: 1  # 总开关：1=启用当前功能，0=关闭
+          restrict_projection: 1  # 1=仅使用图像 ROI 内的 LiDAR 投影；当前主流程可将 ROI 仅用于匹配筛选
+          restrict_image_edges: 1  # 1=只允许图像 ROI 内的边缘/轮廓参与匹配
+          rects:  # 图像 ROI 列表，每项格式为 [x, y, width, height]，单位 px
+            - [652, 383, 305, 198]  # [x, y, w, h] 鼠标批量框选保存的图像 ROI
+        lidar:  # LiDAR 原始坐标系下的三维 ROI 配置
+          enable: 1  # 总开关：1=启用当前功能，0=关闭
+          xyz_min: [-40.0, -10.0, -3.0]  # LiDAR 三维轴向裁剪下限 [x_min, y_min, z_min]，单位 m
+          xyz_max: [40.0, 100.0, 6.0]  # LiDAR 三维轴向裁剪上限 [x_max, y_max, z_max]，单位 m
+
+  Back:
+    camera:  # 相机内参或图像 ROI 配置分组
+      intrinsic_matrix: [679.1064862, 0.0, 639.1382151,
+                         0.0, 679.0114069, 359.8371933,
+                         0.0, 0.0, 1.0]  # 3×3 相机内参矩阵 K，按行展开为 [fx,0,cx, 0,fy,cy, 0,0,1]
+      distortion_coeffs: [0, 0, 0, 0, 0, 0, 0, 0]  # 相机畸变参数；输入图像已去畸变时通常全部设为 0
+    extrinsic_initial:  # LiDAR 到相机的外参初值，旋转顺序为 yaw、roll、pitch
+      yaw_deg: 1.817745  # 外参 yaw，绕相机 Y 轴旋转，单位 deg
+      roll_deg: -6.920636  # 外参 roll，绕相机 Z 轴旋转，单位 deg
+      pitch_deg: 113.892708  # 外参 pitch，绕相机 X 轴旋转，单位 deg
+      x: -0.317185  # LiDAR 原点在相机坐标系中的 X 平移，单位 m
+      y: 0.082994  # LiDAR 原点在相机坐标系中的 Y 平移，单位 m
+      z: 0.12825  # LiDAR 原点在相机坐标系中的 Z 平移，单位 m
+    data:  # 该相机对应的图像、点云、结果文件及静止帧选择
+      image_dir: "../sample_data/camera_back/data_undistorted"  # 已去畸变图像所在目录
+      pcd_dir: "../sample_data/lidar_back_bp/data"  # 对应 LiDAR PCD 点云所在目录
+      result_file: "../result/extrinsic_result.toml"  # 最终外参同步保存的 TOML 结果文件路径
+      static_id: 0  # 0=使用 calib_data.latest_static_id；正数=手动指定 static_XXX
+      static_pick_idx: 0  # 选择该静止段中的第几个 mid 帧；文件名中的 mid_XX
+    cluster_debug:  # 该相机相对 cluster_debug_defaults 的覆盖参数及 ROI
+      # 雷达类型：BP 雷达（稀疏点云）；以下参数独立覆盖全局 defaults。
+      remove_ground_by_default: 1  # 1=默认先做 RANSAC 去地面；各雷达独立设置
+      ground_distance_threshold: 0.3  # RANSAC 点到地面平面的距离阈值，单位 m；BP 较小以避免误删稀疏目标
+      min_lidar_range: 2  # 点到雷达原点的三维距离下限，单位 m
+      max_lidar_range: 100.0  # 点到雷达原点的三维距离上限，单位 m
+      cluster_tolerance_m: 1.20  # 欧式聚类邻域阈值，单位 m；AT128 较小，稀疏 BP 较大
+      cluster_min_points: 3  # 最小聚类点数；BP 设为 3，尽量让稀疏点进入聚类
+      cluster_max_points: 1000000  # 最大聚类点数
+      max_display_clusters: 500  # 最多显示的聚类数量；提高后减少因数量上限丢失的小类
+      boundary_min_projected_points: 3  # 提取投影边界所需的最少投影点数
+      boundary_min_area_px: 2.0  # 保留 LiDAR 投影边界的最小面积，单位 px²
+      boundary_min_arc_px: 6.0  # 保留 LiDAR 投影边界的最小周长，单位 px
+      # 注意：F/G 人工选点模式仍会忽略 camera ROI 与 lidar XYZ ROI；
+      # 上述去地面、range、聚类参数仍然生效，用于生成可点击的 LiDAR 聚类和边界。
+      roi:  # 人工选择的图像 ROI 和 LiDAR 三维裁剪区域
+        camera:  # 相机内参或图像 ROI 配置分组
+          enable: 1  # 总开关：1=启用当前功能，0=关闭
+          restrict_projection: 1  # 1=仅使用图像 ROI 内的 LiDAR 投影；当前主流程可将 ROI 仅用于匹配筛选
+          restrict_image_edges: 1  # 1=只允许图像 ROI 内的边缘/轮廓参与匹配
+          rects:  # 图像 ROI 列表，每项格式为 [x, y, width, height]，单位 px
+            - [502, 330, 132, 144]  # [x, y, w, h] 鼠标批量框选保存的图像 ROI
+        lidar:  # LiDAR 原始坐标系下的三维 ROI 配置
+          enable: 1  # 总开关：1=启用当前功能，0=关闭
+          xyz_min: [-40.0, 2.0, -3.0]  # LiDAR 三维轴向裁剪下限 [x_min, y_min, z_min]，单位 m
+          xyz_max: [40.0, 100.0, 6.0]  # LiDAR 三维轴向裁剪上限 [x_max, y_max, z_max]，单位 m
