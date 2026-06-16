@@ -1,12 +1,12 @@
 # Calibration Operation Guide
 
-This guide describes the offline LiDAR-camera extrinsic calibration workflow. It starts directly from calibration setup and does not include Fast DDS data acquisition or playback procedures.
+This guide describes the offline LiDAR-camera extrinsic calibration workflow. It starts directly from calibration setup and does not include Fast DDS data acquisition or playback procedures.本指南描述了脱机激光雷达相机外部校准工作流程。它直接从校准设置开始，不包括快速DDS数据采集或回放程序。
 
 ## 1. Calibration Scene and Target Placement
 
-For reliable calibration, place large and clearly visible objects within the overlapping field of view of the LiDAR and camera.
+For reliable calibration, place clearly visible objects within the overlapping field of view of the LiDAR and camera.为了进行可靠的校准，请将清晰可见的物体放置在激光雷达和相机的重叠视场内。
 
-Recommended practices:
+Recommended practices:   建议做法:
 
 - Prefer large targets with clear geometric edges.
 - If no fixed structures are available, place three movable targets in each viewing direction and arrange them in a roughly triangular layout.
@@ -16,11 +16,11 @@ Recommended practices:
 - Existing vehicles, retaining walls, and mounted calibration boards may also be used when they provide clear and repeatable edges.
 - Select targets at different image locations and, when possible, at different depths.
 
-The objective is to identify corresponding LiDAR and image features that represent the same physical edges or corners.
+The objective is to identify corresponding LiDAR and image features that represent the same physical edges or corners.目标是识别代表相同物理边缘或角落的相应激光雷达和图像特征。
 
 ## 2. Start the Calibration Application
 
-Run the calibration application with the required sensor pair:
+Run the calibration application with the required sensor pair:使用所需的传感器对运行校准应用程序：
 
 ```bash
 ./build/lidar_cam_semiauto_calibrator \
