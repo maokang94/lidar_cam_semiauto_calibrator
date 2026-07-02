@@ -27,9 +27,9 @@ The objective is to identify corresponding LiDAR and image features that represe
 Run the calibration application with the required sensor pair:使用所需的传感器对运行校准应用程序：
 
 ```bash   ”“bash
-./build/lidar_cam_semiauto_calibrator \．/构建/ lidar_cam_semiauto_calibrator \
-  --config config/calib_config.yaml \——配置配置/ calib_config。yaml \
-  --pair Front   ——两人面前
+./build/lidar_cam_semiauto_calibrator  
+  --config config/calib_config.yaml/ 
+  --pair Front  
 ```
 
 Supported sensor pairs:   支持的传感器对：
